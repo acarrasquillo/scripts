@@ -1,0 +1,49 @@
+#!/bin/bash -e
+
+# auto_decompress_kernel script#Set Variables 
+BTPATH=/boot/firmware 
+CKPATH=$BTPATH/vmlinuz 
+DKPATH=$BTPATH/vmlinux  
+
+#Check if compression needs to be done. 
+if [ -e $BTPATH/check.md5 ]; then  
+   if md5sum --status --ignore-missing -c $BTPATH/check.md5; then
+      echo -e "Files have not changed, Decompression not needed"  
+      exit 0  
+   else 
+      echo -e "Hash failed, kernel will be compressed"  
+   fi 
+fi
+
+#Backup the old decompressed kernel 
+mv $DKPATH $DKPATH.bak  
+if [ ! $? == 0 ]; then  
+   echo -e "DECOMPRESSED KERNEL BACKUP FAILED!"  
+   exit 1 
+else  
+   echo -e "Decompressed kernel backup was successful" 
+fi  
+
+#Decompress the new kernel 
+echo "Decompressing kernel: "$CKPATH".............."  
+
+zcat $CKPATH > $DKPATH  
+
+if [ ! $? == 0 ]; then  
+   echo -e "KERNEL FAILED TO DECOMPRESS!"  
+   exit 1 
+else  
+   echo -e "Kernel Decompressed Succesfully" 
+fi  
+
+#Hash the new kernel for checking 
+md5sum $CKPATH $DKPATH > $BTPATH/check.md5  
+
+if [ ! $? == 0 ]; then  
+   echo -e "MD5 GENERATION FAILED!"  
+else 
+   echo -e "MD5 generated Succesfully" 
+fi  
+
+#Exit 
+exit 0
